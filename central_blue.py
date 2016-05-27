@@ -10,10 +10,15 @@ import sys
 # Global values for Bluetooth
 ##############################################
 
-MAC_DIC = {'BENDSAW':' ', 'DRILL_PRESS':' ', 'MILL': ' ', 'CIRCULAR_SAW': ' '}
+MAC_DIC = {'BENDSAW':'ec:5b:e7:e0:96:c2', 'DRILL_PRESS':'df:c5:a5:de:ee:9a', 
+			'MILL': 'c6:73:0d:c1:66:ba', 'CIRCULAR_SAW': 'ca:58:f6:d6:2f:ae'}
 
+#Using for debbugin first
 SPIRO_MAC_ADDR = 'd0:4f:8f:c9:d0:57'
 BNDSW_MAC_ADDR = 'ec:5b:e7:e0:96:c2'
+DRILL_MAC_ADDR = 'df:c5:a5:de:ee:9a'
+MILLI_MAC_ADDR = 'c6:73:0d:c1:66:ba'
+CIRCS_MAC_ADDR = 'ca:58:f6:d6:2f:ae'
 
 UART_UUID = UUID('6E400001-B5A3-F393-E0A9-E50E24DCCA9E')
 
