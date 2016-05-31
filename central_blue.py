@@ -3,24 +3,46 @@ from time import gmtime, strftime
 import os
 import sys
 
+##############################################
+# BluePy Library Notes
+##############################################
+
+#1 - Cannot manage to use getCharacteristicsbyUUID() method for UART, 
+#	 so I hard code the source which is position [0] of characteristic vector
+
+##############################################
+# TODO list
+##############################################
+
 #TODO: change timeout to 10.0 after tests
 #TODO: graphical interface for inputting MAC address and input
+#TODO: use just dictionaries when user input the MAC address
 
 ##############################################
 # Global values for Bluetooth
 ##############################################
 
-MAC_DIC = {'BENDSAW':'ec:5b:e7:e0:96:c2', 'DRILL_PRESS':'df:c5:a5:de:ee:9a', 
-			'MILL': 'c6:73:0d:c1:66:ba', 'CIRCULAR_SAW': 'ca:58:f6:d6:2f:ae'}
-
-#Using for debbugin first
+#Using for general storage
 SPIRO_MAC_ADDR = 'd0:4f:8f:c9:d0:57'
 BNDSW_MAC_ADDR = 'ec:5b:e7:e0:96:c2'
 DRILL_MAC_ADDR = 'df:c5:a5:de:ee:9a'
 MILLI_MAC_ADDR = 'c6:73:0d:c1:66:ba'
 CIRCS_MAC_ADDR = 'ca:58:f6:d6:2f:ae'
 
+#Usign for friendly programming
+MAC_DIC = {'BENDSAW':BNDSW_MAC_ADDR, 'DRILL_PRESS':DRILL_MAC_ADDR, 
+			'MILL':MILLI_MAC_ADDR, 'CIRCULAR_SAW':CIRCS_MAC_ADDR, 
+			'SPIROMETER':SPIRO_MAC_ADDR}
+
+#UUID for the Bluetooth UART Service based on Nordic Semiconductors Chip
 UART_UUID = UUID('6E400001-B5A3-F393-E0A9-E50E24DCCA9E')
+
+#Global Peripherical variables
+bndsw = None
+spiro = None 
+drill = None 
+milli = None 
+circs = None 
 
 ##############################################
 # Global general variables
@@ -58,6 +80,9 @@ def split_accel_data(data):
 ###############################################
 # Scanning Devices
 ###############################################
+print " "
+print "Scanning devices..."
+print " "
 scanner = Scanner().withDelegate(ScanDelegate())
 devices = scanner.scan(6.0)
 
@@ -68,13 +93,13 @@ print " "
 print "Connecting to nodes..."
 print " "
 for dev in devices:
-    if dev.addr == BNDSW_MAC_ADDR:
+    if dev.addr == MAC_DIC['BENDSAW']:
 	print "Device %s (%s) Bendsaw found, connecting..." %(dev.addr, dev.addrType)
 	bndsw = Peripheral(dev.addr, dev.addrType)
 	for (adtype, desc, value) in dev.getScanData():
 	    print "    %s = %s" % (desc, value)
 	print " "
-    if dev.addr == SPIRO_MAC_ADDR:
+    if dev.addr == MAC_DIC['SPIROMENTER']:
 	print "Device %s (%s) Spirometer found, connecting..." %(dev.addr, dev.addrType)
 	spiro = Peripheral(dev.addr, dev.addrType)
 	for (adtype, desc, value) in dev.getScanData():
@@ -90,6 +115,7 @@ for dev in devices:
 #Writing to doc loop
 #delete old file for testing
 os.system("sudo rm data/data_from_nodes.csv")
+
 file = open("data/data_from_nodes.csv", "a")
 while 1:
     try:
