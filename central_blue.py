@@ -39,12 +39,8 @@ MAC_DIC = {'BENDSAW':BNDSW_MAC_ADDR, 'DRILL_PRESS':DRILL_MAC_ADDR,
 #UUID for the Bluetooth UART Service based on Nordic Semiconductors Chip
 UART_UUID = UUID('6E400001-B5A3-F393-E0A9-E50E24DCCA9E')
 
-#Global Peripherical variables
-bndsw = None
-spiro = None
-drill = None
-milli = None
-circs = None
+#Global dictionary to hold Peripheral objects to nodes
+nodes = {}
 
 ##############################################
 # Global general variables
@@ -95,18 +91,51 @@ print " "
 print "Connecting to nodes..."
 print " "
 for dev in devices:
-    if dev.addr == MAC_DIC['BENDSAW']:
-	print "Device %s (%s) Bendsaw found, connecting..." %(dev.addr, dev.addrType)
-	bndsw = Peripheral(dev.addr, dev.addrType)
-	for (adtype, desc, value) in dev.getScanData():
-        print "    %s = %s" % (desc, value)
-	print " "
+    #Creating Bendsaw Peripheral
+	if dev.addr == MAC_DIC['BENDSAW']:
+	    print "Device %s (%s) Bendsaw found, connecting..." %(dev.addr, dev.addrType)
+	    bndsw = Peripheral(dev.addr, dev.addrType)
+		nodes['bendsaw'] = bndsw
+	    for (adtype, desc, value) in dev.getScanData():
+            print "    %s = %s" % (desc, value)
+	    print " "
+	
+	#Creating Drilling Machine Peripheral
+	if dev.addr == MAC_DIC['DRILL_PRESS']:
+	    print "Device %s (%s) Bendsaw found, connecting..." %(dev.addr, dev.addrType)
+	    drill = Peripheral(dev.addr, dev.addrType)
+		nodes['drill_press'] = drill
+	    for (adtype, desc, value) in dev.getScanData():
+            print "    %s = %s" % (desc, value)
+	    print " "
+	
+	#Creating Circular Saw Peripheral
+	if dev.addr == MAC_DIC['CIRCULAR_SAW']:
+	    print "Device %s (%s) Bendsaw found, connecting..." %(dev.addr, dev.addrType)
+	    circs = Peripheral(dev.addr, dev.addrType)
+		nodes['circ_saw'] = circs
+	    for (adtype, desc, value) in dev.getScanData():
+            print "    %s = %s" % (desc, value)
+	    print " "
+		
+	#Creating Milling Machine Peripheral
+	if dev.addr == MAC_DIC['MILL']:
+	    print "Device %s (%s) Bendsaw found, connecting..." %(dev.addr, dev.addrType)
+	    milli = Peripheral(dev.addr, dev.addrType)
+		nodes['milling_machine'] = milli
+	    for (adtype, desc, value) in dev.getScanData():
+            print "    %s = %s" % (desc, value)
+	    print " "
+	
+	#Creating Spirometer Peripheral
     if dev.addr == MAC_DIC['SPIROMENTER']:
-	print "Device %s (%s) Spirometer found, connecting..." %(dev.addr, dev.addrType)
-	spiro = Peripheral(dev.addr, dev.addrType)
-	for (adtype, desc, value) in dev.getScanData():
-        print "    %s = %s" % (desc, value)
-	print " "
+	    print "Device %s (%s) Spirometer found, connecting..." %(dev.addr, dev.addrType)
+	    spiro = Peripheral(dev.addr, dev.addrType)
+		nodes['spirometer'] = spiro
+	    for (adtype, desc, value) in dev.getScanData():
+            print "    %s = %s" % (desc, value)
+	    print " "
+		
 
 #Debugging loop
 #while 1:
@@ -121,18 +150,53 @@ os.system("sudo rm data/data_from_nodes.csv")
 file = open("data/data_from_nodes.csv", "a")
 while 1:
     try:
-        bndsw_data = str(bndsw.getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
-        spiro_data = str(spiro.getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+		#Handling Bendsaw collection of data
+		if nodes.has_key('bendsaw') is True:
+			data = str(nodes['bendsaw'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
+				split_accel_data(data)
+				file.write("N1, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
+				
+		#Handling Drilling Machine collection of data
+		if nodes.has_key('drill_press') is True:
+			data = str(nodes['drill_press'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
+				split_accel_data(data)
+				file.write("N2, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
+				
+		#Handling Milling Machine collection of data
+		if nodes.has_key('milling_machine') is True:
+			data = str(nodes['milling_machine'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
+				split_accel_data(data)
+				file.write("N3, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
+				
+		#Handling Circular Saw collection of data
+		if nodes.has_key('circ_saw') is True:
+			data = str(nodes['circ_saw'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
+				split_accel_data(data)
+				file.write("N4, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
+				
+		#Handling Spirometer collection of data
+		if nodes.has_key('spirometer') is True:
+			data = str(nodes['spirometer'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+			file.write("N5, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " + data)
+        
+		
+		
+		#bndsw_data = str(bndsw.getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+        #spiro_data = str(spiro.getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+		
 
-	#Drop bad packets data from sensor
-	if (bndsw_data[0]=='X') and ('Y' in bndsw_data) and ('Z' in bndsw_data):
-        split_accel_data(bndsw_data)
-        file.write("N1, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
-	file.write("N2, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " + str(spiro_data))
+	    #Drop bad packets data from bendsaw sensor
+	    #if (bndsw_data[0]=='X') and ('Y' in bndsw_data) and ('Z' in bndsw_data):
+        #    split_accel_data(bndsw_data)
+        #    file.write("N1, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
+	    #file.write("N2, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " + str(spiro_data))
 
-	print "."
+	    print "."
     except KeyboardInterrupt:
-	print "Python script was killed, closing file..."
-	file.close()
-	sys.exit()
-end
+	    print "Python script was killed, closing file..."
+	    file.close()
+	    sys.exit()
