@@ -2,6 +2,8 @@ from bluepy.btle import Scanner, DefaultDelegate, Peripheral, Service, Character
 from time import gmtime, strftime
 import os
 import sys
+import threading
+import thread
 
 ##############################################
 # BluePy Library Notes
@@ -63,6 +65,22 @@ class ScanDelegate(DefaultDelegate):
             print "Discovered device", dev.addr
         elif isNewData:
             print "Received new data from", dev.addr
+
+##############################################
+# Override for Threading Class
+##############################################
+class nodeThread (threading.Thread):
+    def __init__(self, threadID, name):
+        super(nodeThread, self).__init__()
+        self.threadID = threadID
+        self.name = name
+    def run(self):
+        data = str(nodes[str(self.name)].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
+        # if (data[0]=='X') and ('Y' in data) and ('Z' in data):
+        split_accel_data(data)
+        file.write("N" +str(self.threadID) +", "
+                   +strftime("%Y-%m-%d %H:%M:%S", gmtime()) +", "
+                   +datax +", " +datay +", " +dataz)
 
 ###############################################
 # General Functions
@@ -154,45 +172,32 @@ for dev in devices:
 ###############################################
 # Delete old file for testing
 os.system("sudo rm data/data_from_nodes.csv")
-
+# Creating new file
 file = open("data/data_from_nodes.csv", "a")
+
+bendsaw_thread = nodeThread(1, 'bendsaw')
+drill_thread = nodeThread(2, 'drill_press')
+mill_thread = nodeThread(3, 'milling_machine')
+circ_thread = nodeThread(4, 'circ_saw')
+
 while 1:
     try:
-		# Handling Bendsaw collection of data
-		if nodes.has_key('bendsaw') is True:
-			data = str(nodes['bendsaw'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
-			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
-				split_accel_data(data)
-				file.write("N1, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
-
-		# Handling Drilling Machine collection of data
-		if nodes.has_key('drill_press') is True:
-			data = str(nodes['drill_press'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
-			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
-				split_accel_data(data)
-				file.write("N2, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
-
+        # Handling Bendsaw collection of data
+        if nodes.has_key('bendsaw') is True:
+            bendsaw_thread.run()
+        # Handling Drilling Machine collection of data
+        if nodes.has_key('drill_press') is True:
+            drill_thread.run()
 		# Handling Milling Machine collection of data
-		if nodes.has_key('milling_machine') is True:
-			data = str(nodes['milling_machine'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
-			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
-				split_accel_data(data)
-				file.write("N3, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
-
+        if nodes.has_key('milling_machine') is True:
+            mill_thread.run()
 		# Handling Circular Saw collection of data
-		if nodes.has_key('circ_saw') is True:
-			data = str(nodes['circ_saw'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
-			if (data[0]=='X') and ('Y' in data) and ('Z' in data):
-				split_accel_data(data)
-				file.write("N4, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " +datax +", " +datay +", " +dataz)
-
-		# Handling Spirometer collection of data
-		if nodes.has_key('spirometer') is True:
+        if nodes.has_key('circ_saw') is True:
+            circ_thread.run()
+        # Handling Spirometer collection of data
+        if nodes.has_key('spirometer') is True:
 			data = str(nodes['spirometer'].getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
 			file.write("N5, " + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ", " + data)
-
-
-
 		# bndsw_data = str(bndsw.getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
         # spiro_data = str(spiro.getServiceByUUID(UART_UUID).getCharacteristics()[0].read())
 
